@@ -5,76 +5,63 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: gzovkic <gzovkic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/29 10:10:21 by gzovkic           #+#    #+#             */
-/*   Updated: 2024/11/05 17:24:19 by gzovkic          ###   ########.fr       */
+/*   Created: 2024/11/06 15:54:14 by gzovkic           #+#    #+#             */
+/*   Updated: 2024/11/07 16:41:18 by gzovkic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-char	*make_str(int count, char *str, char *buffer, int *str_count,
-			int *total_size);
+char	*make_str(unsigned size, char *buffer);
 void	*ft_calloc(size_t count, size_t size);
 void	ft_bzero(void *s, size_t n);
 size_t	ft_strcpy(char *dst, const char *src);
-
+char	*ft_strjoin(char const *s1, char const *s2);
+int	ft_strlen(const char *c);
 
 char	*get_next_line(int fd)
 {
-	static char	buffer[BUFFER_SIZE];
-	int			buffer_check;
-	int			count;
-	char		*str;
-	static int	str_count;
-	static int	total_size;
-
-	total_size = 0;
-	str_count = 0;
+	static char		buffer[BUFFER_SIZE];
+	int				buffer_check;
+	int				count;
+	static	char	*str;
+	char *str2;
+	
+	str = NULL;
+	str2 = NULL;
+	count = 0;
 	while ((buffer_check = read(fd, buffer, BUFFER_SIZE)) > 0)
 	{
-		count = 0;
-		while (count < buffer_check)
+		if(str2 == NULL && str == NULL)
+			str = make_str(buffer_check, buffer);
+		else
+			str2 = make_str(buffer_check, buffer);
+		if(str != NULL && str2 != NULL)
 		{
-			str = make_str(count, str, buffer, &str_count, &total_size);
-			if(!str)
-				return(NULL);
-			if (buffer[count] == '\n')
-				return (str);
-			count++;
+			str = ft_strjoin(str,str2);
 		}
+		if(!str)
+			return(NULL);
 	}
-	if(str_count > 0)
-		return(str);
-	free(str);
+	return(str);
 	return (NULL);
 }
-
-char	*make_str(int count, char *str, char *buffer, int *str_count,
-		int *total_size)
+char *make_str(unsigned size, char *buffer)
 {
-	char	*temp;
+	char *str;
+	unsigned int count;
 
-	if (*str_count + 1 >= *total_size) 
+	count = 0;
+	str = ft_calloc(size, sizeof(char));
+	if(!str)
+		return(NULL);
+	while(size > count)
 	{
-    	*total_size += BUFFER_SIZE;
-    	temp = ft_calloc(*total_size, sizeof(char));
-		if (temp == NULL)
-		{
-			free(str);
-			return (NULL);
-		}
-		if(str != NULL)
-		{
-			ft_strcpy(temp, str);
-			free(str);
-		}
-		str = temp;
+		str[count] = buffer[count];
+		count++;
 	}
-	str[*str_count] = buffer[count];
-	(*str_count)++;
-	return (str);
+	return(str);
 }
-
 void	*ft_calloc(size_t count, size_t size)
 {
 	size_t	num;
@@ -119,5 +106,60 @@ size_t	ft_strcpy(char *dst, const char *src)
 		count++;
 	}
 	dst[count] = '\0';
-	return (srclen);
+	return(srclen);
+}
+char	*ft_strjoin(char const *s1, char const *s2)
+{
+	int		count;
+	int		count2;
+	int		sumstr;
+	char	*newstr;
+
+	count = 0;
+	count2 = 0;
+	sumstr = ft_strlen(s1) + ft_strlen(s2);
+	newstr = ft_calloc(sumstr + 1, sizeof(char));
+	if (!newstr)
+		return (NULL);
+	while (count + count2 < sumstr)
+	{
+		if (count < ft_strlen(s1))
+		{
+			newstr[count] = s1[count];
+			count++;
+		}
+		else if (count2 < ft_strlen(s2))
+		{
+			newstr[count + count2] = s2[count2];
+			count2++;
+		}
+	}
+	return (newstr);
+}
+int	ft_strlen(const char *c)
+{
+	int	count;
+
+	count = 0;
+	while (c[count] != '\0')
+		count++;
+	return (count);
+}
+
+int main ()
+{
+	char *new_line;
+	int fd;
+
+	fd = open("my_poem.txt", O_RDONLY);
+	if (fd < 0)
+		printf("ERROR OPENING FILE");
+
+	while(1)
+	{
+		new_line = get_next_line(fd);
+		if(!new_line)
+			break;
+		printf("%s", new_line);
+	}
 }
