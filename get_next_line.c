@@ -6,31 +6,29 @@
 /*   By: gzovkic <gzovkic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/06 15:54:14 by gzovkic           #+#    #+#             */
-/*   Updated: 2024/11/09 15:04:00 by gzovkic          ###   ########.fr       */
+/*   Updated: 2024/11/10 19:40:30 by gzovkic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
+char	*get_next_line(int fd);
 char	*make_str(char *buffer);
 void	*ft_calloc(size_t count, size_t size);
 void	ft_bzero(void *s, size_t n);
-size_t	ft_strcpy(char *dst, const char *src);
 char	*ft_strjoin(char const *s1, char const *s2);
 int		ft_strlen(const char *c);
 char	*leftover_check(char *buffer);
+char	*ft_strchr(const char *s, int c);
 
 char	*get_next_line(int fd)
 {
 	static char	buffer[BUFFER_SIZE + 1];
 	int			buffer_check;
 	static char	*str;
-	char		*str2;
 	static char	*buffer_leftovers;
-
-	str = NULL;
-	str2 = NULL;
-	if (buffer_leftovers)
+	
+	if (buffer_leftovers && buffer_leftovers[0] != '\0')
 	{
 		str = make_str(buffer_leftovers);
 		buffer_leftovers = leftover_check(buffer_leftovers);
@@ -40,27 +38,26 @@ char	*get_next_line(int fd)
 	while ((buffer_check = read(fd, buffer, BUFFER_SIZE)) > 0)
 	{
 		buffer[buffer_check] = '\0';
-		if (str2 == NULL && str == NULL)
+		if(!buffer_leftovers)
 		{
-			str = make_str(buffer);
-			buffer_leftovers = leftover_check(buffer);
+			while(ft_strchr(str, '\n') == NULL)
+			{	
+				str = make_str(buffer);
+			
+				buffer_leftovers = leftover_check(buffer);
+			
+			}
 		}
 		else
 		{
-			str2 = make_str(buffer);
+			str = make_str(buffer);
+			str = ft_strjoin(buffer_leftovers, str);
 			buffer_leftovers = leftover_check(buffer);
 		}
-		if (str != NULL && str2 != NULL && buffer_leftovers[0] == '\0')
-			str = ft_strjoin(str, str2);
-		else if (str2 != NULL && buffer_leftovers[0] != '\0')
-			str = ft_strjoin(buffer_leftovers, str2);
-		if (!str)
-			return (NULL);
-		
+		if(str)
+			return(str);
 	}
-	
 	return (NULL);
-
 }
 char	*make_str(char *buffer)
 {
@@ -75,12 +72,13 @@ char	*make_str(char *buffer)
 	str = ft_calloc(count + 1, sizeof(char));
 	if (!str)
 		return (NULL);
-	while (count > 0)
+	while (count > count2)
 	{
 		str[count2] = buffer[count2];
-		count--;
 		count2++;
 	}
+	if(buffer[count2] == '\n')
+		str[count2] = '\n'; 
 	return (str);
 }
 
@@ -177,6 +175,24 @@ int	ft_strlen(const char *c)
 	return (count);
 }
 
+char	*ft_strchr(const char *s, int c)
+{
+	int				count;
+	unsigned char	c2;
+
+	c2 = (unsigned char)c;
+	count = 0;
+	while (s[count] != '\0')
+	{
+		if (s[count] == c2)
+			return ((char *)&s[count]);
+		count++;
+	}
+	if (c2 == '\0')
+		return ((char *)&s[count]);
+	return (NULL);
+}
+
 int	main(void)
 {
 	char *new_line;
@@ -185,11 +201,16 @@ int	main(void)
 	fd = open("test.txt", O_RDONLY);
 	if (fd < 0)
 		printf("ERROR OPENING FILE");
-	while (1)
-	{
-		new_line = get_next_line(fd);
-		if (!new_line)
-			break ;
-		printf("%s", new_line);
+	// while (1)
+	// {
+	// 	new_line = get_next_line(fd);
+	// 	if (!new_line)
+	// 		break ;
+	// 	printf("%s", new_line);
+	// 	free(new_line);
+	// }
+	new_line = get_next_line(fd);
+	printf("%s", new_line);
+	close(fd);
+	return(0);
 	}
-}
