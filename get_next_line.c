@@ -6,7 +6,7 @@
 /*   By: gzovkic <gzovkic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/06 15:54:14 by gzovkic           #+#    #+#             */
-/*   Updated: 2024/11/10 19:40:30 by gzovkic          ###   ########.fr       */
+/*   Updated: 2024/11/11 23:13:28 by gzovkic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,38 +26,53 @@ char	*get_next_line(int fd)
 	static char	buffer[BUFFER_SIZE + 1];
 	int			buffer_check;
 	static char	*str;
+	char 		*str2;
 	static char	*buffer_leftovers;
-	
-	if (buffer_leftovers && buffer_leftovers[0] != '\0')
+	int			newline_check;
+
+	newline_check = 0;
+	if(buffer_leftovers)
 	{
 		str = make_str(buffer_leftovers);
 		buffer_leftovers = leftover_check(buffer_leftovers);
-		if(str)
+		if(ft_strchr(str, '\n') || ft_strchr(str, '\0'))
 			return (str);
+					if(ft_strchr(buffer_leftovers, '\0'))
+			free(buffer_leftovers);
+		str = ft_strjoin(str, buffer_leftovers);
 	}
-	while ((buffer_check = read(fd, buffer, BUFFER_SIZE)) > 0)
+	while (newline_check == 0)
 	{
-		buffer[buffer_check] = '\0';
-		if(!buffer_leftovers)
+		buffer_check = read(fd, buffer, BUFFER_SIZE);
+		if(buffer_check < 0)
+			return(NULL);
+		if(buffer_check == 0)
 		{
-			while(ft_strchr(str, '\n') == NULL)
-			{	
-				str = make_str(buffer);
-			
-				buffer_leftovers = leftover_check(buffer);
-			
+			if(str == NULL || str[0] == '\0')
+			{
+				free(str);
+				return(NULL);
 			}
+			newline_check = 1;
 		}
+		buffer[buffer_check] = '\0';
+		if (str == NULL)
+			str = make_str(buffer);
 		else
 		{
-			str = make_str(buffer);
-			str = ft_strjoin(buffer_leftovers, str);
-			buffer_leftovers = leftover_check(buffer);
+			str2 = ft_strjoin(str, buffer);
+			str = str2;
 		}
-		if(str)
-			return(str);
-	}
-	return (NULL);
+		if(ft_strchr(str, '\n'))
+			newline_check = 1;
+	}	
+	buffer_leftovers = leftover_check(buffer);
+	buffer_leftovers[ft_strlen(buffer_leftovers)] = '\0';
+	// if(ft_strlen(buffer_leftovers) < 0)
+	// 	free(buffer_leftovers);
+	// if (*buffer_leftovers == '\0')
+	// 	free(buffer_leftovers);
+	return (str);
 }
 char	*make_str(char *buffer)
 {
@@ -78,7 +93,7 @@ char	*make_str(char *buffer)
 		count2++;
 	}
 	if(buffer[count2] == '\n')
-		str[count2] = '\n'; 
+		str[count2] = '\n';
 	return (str);
 }
 
@@ -201,16 +216,15 @@ int	main(void)
 	fd = open("test.txt", O_RDONLY);
 	if (fd < 0)
 		printf("ERROR OPENING FILE");
-	// while (1)
-	// {
-	// 	new_line = get_next_line(fd);
-	// 	if (!new_line)
-	// 		break ;
-	// 	printf("%s", new_line);
-	// 	free(new_line);
-	// }
-	new_line = get_next_line(fd);
-	printf("%s", new_line);
-	close(fd);
+	while (1)
+	{
+		new_line = get_next_line(fd);
+		if (!new_line)
+			break ;
+		printf("%s", new_line);
+		free(new_line);
+	}
+	// new_line = get_next_line(fd);
+	// printf("%s", new_line);
 	return(0);
 	}
