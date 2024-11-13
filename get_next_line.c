@@ -6,7 +6,7 @@
 /*   By: gzovkic <gzovkic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/06 15:54:14 by gzovkic           #+#    #+#             */
-/*   Updated: 2024/11/13 03:32:05 by gzovkic          ###   ########.fr       */
+/*   Updated: 2024/11/13 15:56:59 by gzovkic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,9 +42,12 @@ char	*get_next_line(int fd)
 char	*line_return(char **container)
 {
 	char	*rt_str;
+	char	*temp;
 
 	rt_str = make_str(*container);
-	*container = leftover_check(*container);
+	temp = leftover_check(*container);
+	free(*container);
+	*container = temp;
 	return (rt_str);
 }
 
@@ -58,7 +61,7 @@ int	read_count(int fd, char **container)
 		*container = ft_calloc(1, sizeof(char));
 	buffer_check = read(fd, buffer, BUFFER_SIZE);
 	if (buffer_check < 0)
-		return (0);
+		return (-1);
 	while (buffer_check > 0)
 	{
 		buffer[buffer_check] = '\0';
@@ -125,22 +128,22 @@ char	*leftover_check(char *buffer)
 	return (str);
 }
 
-// int	main(void)
-// {
-// 	char *new_line;
-// 	int fd;
+int	main(void)
+{
+	char *new_line;
+	int fd;
 
-// 	fd = open("test.txt", O_RDONLY);
-// 	if (fd < 0)
-// 		printf("ERROR OPENING FILE");
-// 	while (1)
-// 	{
-// 		new_line = get_next_line(fd);
-// 		if (!new_line)
-// 			break ;
-// 		printf("%s", new_line);
-// 		free(new_line);
-// 	}
+	fd = open("test.txt", O_RDONLY);
+	if (fd < 0)
+		printf("ERROR OPENING FILE");
+	while (1)
+	{
+		new_line = get_next_line(0);
+		if (!new_line)
+			break ;
+		printf("%s", new_line);
+		free(new_line);
+	}
 // // 	// new_line = get_next_line(fd);
 // // 	// printf("%s", new_line);
 // // 	// printf("%s", get_next_line(fd));
@@ -149,5 +152,5 @@ char	*leftover_check(char *buffer)
 // // 	// printf("%s", get_next_line(fd));
 // // 	// printf("%s", get_next_line(fd));
 
-// 	return(0);
-// 	}
+	return(0);
+	}
