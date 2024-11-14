@@ -6,7 +6,7 @@
 /*   By: gzovkic <gzovkic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/06 15:54:14 by gzovkic           #+#    #+#             */
-/*   Updated: 2024/11/13 19:33:47 by gzovkic          ###   ########.fr       */
+/*   Updated: 2024/11/14 14:59:47 by gzovkic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,67 +20,67 @@ int		read_count(int fd, char **container);
 
 char	*get_next_line(int fd)
 {
-	char		*rt_str;
-	int			byte_length;
-	static char	*container;
+	char		*rt_str;		// str den ich zurück gebe.
+	int			byte_length;	// länge der gelesenen bytes.
+	static char	*container;		// static char da dieser wert gespeichtert werden muss auch nach dem die funktion beendet wurden ist.
 
-	if (fd < 0 || BUFFER_SIZE <= 0)
+	if (fd < 0 || BUFFER_SIZE <= 0) 				// ob der buffer oder die file invalid ist.
 		return (NULL);
+	if (!container)									// erstellt den container wenn er nicht so erstellt worden ist.
+		container = ft_calloc(1, sizeof(char)); 
 	if (!container)
-		container = ft_calloc(1, sizeof(char));
-	if (!container)
-		return (NULL);
-	byte_length = read_count(fd, &container);
-	if (byte_length < 0 || (byte_length == 0 && (!container || !*container)))
-	{
-		free(container);
-		container = NULL;
-		return (NULL);
+		return (NULL);								// wenn conatiner nicht erstellt werden konnte.
+	byte_length = read_count(fd, &container); 		// erstellt im conatiner den ersten string und check ob noch was gelesen werden konnte.
+	if (byte_length < 0 || (byte_length == 0 && (!container || !*container)))	//wenn readen gefailed ist oder wenn nichr mehr gelesen werden konnte
+	{																			//und der container noch exestiert oder eine value im container ist.
+		free(container);	//löscht den in inhalt vom container'
+		container = NULL;	//setzt den container auf NULL weil er static ist.
+		return (NULL);		// return NULL indikator das nicht mehr gelesen weren konnte,
 	}
-	rt_str = line_return(&container);
-	return (rt_str);
+	rt_str = line_return(&container);	// sucht im container den sting und upadten den container mit den rest der noch im container liegt.
+	return (rt_str);					// gubt den gefundenen string zurück.
 }
 
 char	*line_return(char **container)
 {
-	char	*rt_str;
-	char	*temp;
+	char	*rt_str;	// string der returned wird.
+	char	*temp;		//wird benötigt um den container string zu updaten.
 
-	rt_str = make_str(*container);
-	if (!rt_str)
+	rt_str = make_str(*container);	//suchtnach den ersten \n oder \0 und erstellt in rt_str die line.
+	if (!rt_str)					// wenn die line nicht erstellt werden konnte
 	{
-		free(*container);
-		*container = NULL;
-		return (NULL);
+		free(*container);			//löscht den in inhalt vom container' 
+		*container = NULL;			//setzt den container auf NULL weil er static ist.
+		return (NULL);				// return NULL indikator das nicht mehr gelesen weren konnte,
 	}
-	temp = leftover_check(*container);
-	free(*container);
-	*container = temp;
-	return (rt_str);
+	temp = leftover_check(*container);	//sucht nach dem ersten \n oder \0 und kopiert alles was nach dem string ist und speichert es in temp.
+	free(*container);					//freed den container.
+	*container = temp;					// setzt den pointer von temp zum container.
+	return (rt_str);					// returned den gefundenen string.
 }
 
 int	read_count(int fd, char **container)
 {
-	char	buffer[BUFFER_SIZE + 1];
-	char	*str2;
-	int		buffer_check;
+	char	buffer[BUFFER_SIZE + 1];	// erstellt den buffer wo das was gereadet wurde gespeicher wird, buffer + 1 das wir den \0 am ende hinzufügen.
+	char	*str2;						// erstellt einen temp string wo der container geupdated wird.
+	int		buffer_check;				// checkt ob noch was gereadet wurde.
 
-	buffer_check = read(fd, buffer, BUFFER_SIZE);
-	if (buffer_check < 0)
-		return (-1);
-	while (buffer_check > 0)
+	buffer_check = read(fd, buffer, BUFFER_SIZE);	//readet und speicher die gelesen anzahl der bytes in buffer_check.
+	if (buffer_check < 0)							// wenn read eine negative zahl ist. ist der read fehlgeschlagen.
+		return (-1);								// return -1 um den fehler anzuzeigen.
+	while (buffer_check > 0)					//solange buffer_check einen positiven wert hat wurde was gelesen
 	{
-		buffer[buffer_check] = '\0';
-		str2 = ft_strjoin(*container, buffer);
-		free(*container);
-		if (!str2)
-			return (*container = NULL, -1);
-		*container = str2;
-		if (ft_strchr(*container, '\n'))
-			break ;
-		buffer_check = read(fd, buffer, BUFFER_SIZE);
+		buffer[buffer_check] = '\0';					//setzt auf das ende vom buffer ein \0 um das ende des buffers zu zu bestimmen.
+		str2 = ft_strjoin(*container, buffer);			//fügt den container mit dem buffer zusammen und erstllt das ergebnis in str2.
+		free(*container);								//freed den container.
+		if (!str2)										//wenn str2 nicht erstellt werden konnte.
+			return (*container = NULL, -1);				// setzt den container auf NULL und returnt -1.
+		*container = str2;								// setzt den pointer von str2 wo der neu erstellte string ist auf container.
+		if (ft_strchr(*container, '\n'))				// wenn container ein \n hat geht der aus dem loop raus .
+			break ;										// breakt aus dem loop.
+		buffer_check = read(fd, buffer, BUFFER_SIZE);	// readet noch mal neu um den loop weiterlaufen zu lassen wenn str noch kein \n hat.
 	}
-	return (buffer_check);
+	return (buffer_check);	// return den die anzahl der gerade gelesen bytes.
 }
 
 char	*make_str(char *buffer)
